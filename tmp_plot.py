@@ -76,14 +76,14 @@ pred_x1 = pred_x[:, 0]
 true_x2 = true_x[:, 2]
 pred_x2 = pred_x[:, 2]
 
-plt.figure(figsize=(4, 4))
+plt.figure(figsize=(5, 4))
 plt.plot(t, true_x1, label='θ_1')
 plt.plot(t, pred_x1, '--', label='θ_1 (estimated)')
 plt.plot(t, true_x2, label='θ_2')
 plt.plot(t, pred_x2, '--', label='θ_2 (estimated)')
 plt.xlabel('Time')
 plt.ylabel('Value')
-plt.title('Mass-Spring-Damper System')
+plt.title('Rotor Angle')
 plt.legend()
 plt.grid(True)
 plt.show()
