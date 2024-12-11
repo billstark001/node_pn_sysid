@@ -7,11 +7,9 @@ import torch
 import torch.nn as nn
 import torchdiffeq
 
-import node
-import syntax_tree as st
-from syntax_tree.miss_hit_helper import get_function_by_name, parse_matlab_code
-from syntax_tree.src_exec_cfg import exec_func
-from utils import DictWrapper, cache
+from matrace import import_matlab_func
+from matrace.std.struct import create_struct
+from utils import cache
 
 @dataclasses.dataclass
 class ScenarioParameters:
@@ -76,6 +74,7 @@ def get_batch(
 global_vars_dict = dict(
   sin = torch.sin,
   cos = torch.cos,
+  struct = create_struct,
 )
 
 class ODEFunc(nn.Module):
@@ -102,6 +101,8 @@ class ODEFunc(nn.Module):
         yield param
     
   def forward(self, t: float, y: torch.Tensor):
+    if y.dim() == 1:
+      y = y.unsqueeze(1)
     with torch.enable_grad():
       inputs = { self.inputs_key: y }
       res: torch.Tensor = self.func(inputs, self.params)
@@ -137,22 +138,10 @@ class EnvModelEstimator(object):
     # params
     
     p = self.params
-    with open(p.network_path, 'r', encoding="utf-8") as f:
-      nw_func_content = f.read()
-    file_ast = parse_matlab_code(nw_func_content, p.network_path)
-    func_ast = get_function_by_name(file_ast)
-      
-    # create residual function
-    def residual_function(inputs: dict, params: dict):
-      dydt = exec_func(
-        func_ast,
-        [
-          DictWrapper(inputs),
-          DictWrapper(params),
-        ],
-        global_vars_dict
-      )
-      return dydt
+    
+    residual_function_ = import_matlab_func(p.network_path, global_vars_dict)
+    def residual_function(inputs, params):
+      return residual_function_(create_struct(**inputs), create_struct(**params))
     
     # transform params from numpy arrays to trainable parameters
     all_params = {**p.params}      
@@ -167,10 +156,11 @@ class EnvModelEstimator(object):
     all_inputs = { k: torch.from_numpy(v) for k, v in p.inputs.items() }
     
     # trace it a priori
+    # TODO load trace from file
+    # traced_residual_function = None
     traced_residual_function = torch.jit.trace(
       residual_function, (all_inputs, all_params),
     )
-    # TODO load trace from file
     
     # compose function
     self.func = ODEFunc(
@@ -239,6 +229,11 @@ class EnvModelEstimator(object):
         ret[name] = param.cpu().numpy()
     return ret
 
+  def get_response(self):
+    with torch.no_grad():
+      pred_x = torchdiffeq.odeint_adjoint(
+        self.func, self.true_x0, self.t).to(self.device)
+    return pred_x.detach().cpu().numpy()
 
   def evaluate(self):
     with torch.no_grad():
