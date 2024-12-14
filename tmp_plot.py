@@ -2,6 +2,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+from plot_utils import create_precise_figure, save_precise_figure
 from solver_wrapper import EnvModelEstimator, ScenarioParameters, SolverParameters, default_optim_factory
 
 # prepare data
@@ -76,14 +77,29 @@ pred_x1 = pred_x[:, 0]
 true_x2 = true_x[:, 2]
 pred_x2 = pred_x[:, 2]
 
-plt.figure(figsize=(5, 4))
-plt.plot(t, true_x1, label='θ_1')
-plt.plot(t, pred_x1, '--', label='θ_1 (estimated)')
-plt.plot(t, true_x2, label='θ_2')
-plt.plot(t, pred_x2, '--', label='θ_2 (estimated)')
-plt.xlabel('Time')
-plt.ylabel('Value')
-plt.title('Rotor Angle')
-plt.legend()
-plt.grid(True)
-plt.show()
+fig, ax = create_precise_figure(
+  width_cm=7.8,
+  height_cm=3.7,
+  font_size_pt=7,
+  scale_factor=2,
+  margin_cm=0.01,
+  latex_mode=True,
+)
+
+ax.plot(t, true_x1, label='$\\theta_1$')
+ax.plot(t, pred_x1, '--', label='$\\theta_1$ (estimated)')
+ax.plot(t, true_x2, label='$\\theta_2$')
+ax.plot(t, pred_x2, '--', label='$\\theta_2$ (estimated)')
+ax.set_xlabel('Time')
+ax.set_ylabel('Value')
+# ax.set_title('Rotor Angle')
+ax.legend()
+ax.grid(True)
+
+save_precise_figure(
+  fig,
+  'run/output_figure',
+  dpi=300,
+  formats=['pdf', 'png', 'svg'],
+  transparent=False,
+)
