@@ -49,7 +49,7 @@ def create_precise_figure(
     fig, ax = plt.subplots(figsize=(width_cm*CM_TO_INCH, height_cm*CM_TO_INCH))
     
     # layout
-    # plt.tight_layout(pad=margin_cm*CM_TO_INCH)
+    plt.tight_layout(pad=margin_cm*CM_TO_INCH)
     plt.tight_layout()
     
     # misc
