@@ -1,27 +1,9 @@
+% init environment
+
 env_vars = utils.env(File='.env');
-
-% init python
-
-pythonPath = '/opt/anaconda3/bin/python';
-
-if isfield(env_vars, 'CONDA_PYTHON_EXE')
-    pythonPath = env_vars.CONDA_PYTHON_EXE;
-elseif isfield(env_vars, 'PYTHON_PATH')
-    pythonPath = env_vars.PYTHON_PATH;
-elseif isfield(env_vars, 'PYTHON_EXE')
-    pythonPath = env_vars.PYTHON_EXE;
-end
-
-pyenv(Version = pythonPath);
-pyenv(ExecutionMode = "OutOfProcess");
-
+init_python(env_vars);
+init_guilda(env_vars);
 solver = py.importlib.import_module('solver_wrapper');
-
-% init guilda
-
-oldFolder = cd(env_vars.GUILDA_PRJ_PATH);
-matlab.project.loadProject(env_vars.GUILDA_PRJ_PATH);
-cd(oldFolder);
 
 % create power network
 
@@ -109,6 +91,18 @@ clamp_parameters = {
     "P_mech_2", ...
 };
 
+% create ground truth parameter struct for convenience
+
+ground_truth = struct();
+for i = 1:3 
+    ground_truth.(normal_parameters{i}) = ...
+        all_parameters_values.(normal_parameters{i}) / factor;
+end
+for i = 1:3 
+    ground_truth.(special_parameters{i}) = ...
+        all_parameters_values.(special_parameters{i}) / factor;
+end
+
 % pack network informations
 all_inputs = struct(y = zeros(4, 1));
 nw_func = func2str(@network_2bus2gen_ode);
@@ -153,11 +147,20 @@ model = solver.create_estimator( ...
 model.init();
 params = utils.py2mat(model.get_current_params());
 
+% training progress
+
+disp('Ground Truth:');
+disp(ground_truth);
+
+disp('Training...');
+
 for itr = 0:1000
 
     if mod(itr, 5) == 0
+        disp('Parameters:');
         disp(params);
-        disp(model.evaluate());
+        loss = model.evaluate();
+        fprintf('Total Loss: %.12f\n', loss);
     end
 
     start = datetime('now');
@@ -175,7 +178,7 @@ for itr = 0:1000
     );
 
     if loss < 4e-10
-        disp('break')
+        disp('Converged.')
         disp(params)
         break
     end

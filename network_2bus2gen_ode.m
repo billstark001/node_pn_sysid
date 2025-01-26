@@ -3,8 +3,6 @@ function dydt = network_2bus2gen_ode(inputs, params)
     
     omega_0 = params.omega_0;
 
-    % TODO temporal solution; this will fail if the problem setting is changed
-
     P_1 = -params.V_field_1 * (params.V_field_2 * ( ...
         params.B_12 * sin(y(1) - y(3)) - params.G_12 * cos(y(1) - y(3)) ...
     ) - params.V_field_1 * params.G_11);
@@ -24,35 +22,3 @@ function dydt = network_2bus2gen_ode(inputs, params)
         dydt_4;
     ];
 end
-
-function wtf = tetsu_gaku(yajuu, sempai, tadokoro, koji)
-
-    function adsadsadasdas()
-        return;
-    end
-    a.b.c.d.e = sin(f);
-    % this is a comment
-    wtf = 114 ^ 514 + 1919 \ 810;
-    ddd = 1;
-    hxd = [1 2; 3 4];
-    syf = [1 2; 3 4]
-    zn = ['1' '2'];
-    hyb = ["1", "2"];
-    hyy = {1, 2};
-    kz = {hxd, syf};
-    gb = {syf; hxd};
-    if yajuu - sempai == tadokoro - koji
-        chr = 'Q.E.D.';
-        for c = chr
-            fprintf(c);
-        end
-        fprintf('\n');
-    elseif yajuu ~= sempai
-        iiyokoiyo();
-    else
-        ikuiku.yajuu();
-    end
-    return;
-end
-
-
